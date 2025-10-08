@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The ScaleUp Arc | Interactive Rate Card 2025</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Teal Accent -->
+    <!-- Application Structure Plan: The SPA is structured as a guided journey for a potential client. It starts with a strong value proposition (Hero), moves to an interactive package explorer allowing focused comparison, followed by a visual chart for quick numerical comparison. It then details supplementary services (Add-ons, Other Services) and concludes with essential terms. This task-oriented flow—from general exploration to specific details—is more intuitive and less overwhelming than the original document's table format, designed to help users self-select the best package for their needs. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Main packages (Brand Builder, etc.). Goal: Inform, Compare. Viz: Interactive content switcher (JS + HTML/CSS). Interaction: Clickable buttons to dynamically display details of one package at a time. Justification: Simplifies information, reduces cognitive load compared to a dense table. Library: Vanilla JS.
+        - Report Info: Package prices, post counts, ad spend. Goal: Compare. Viz: Bar Chart. Interaction: Hover tooltips for precise values. Justification: Provides an immediate, scannable visual representation of the quantitative differences in value and scale between packages. Library: Chart.js (Canvas).
+        - Report Info: Add-ons, Catalogue pricing. Goal: Inform. Viz: Styled cards and a clear HTML table. Interaction: None needed. Justification: Clean, legible presentation for secondary information. Library: HTML/Tailwind.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #1a202c;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        .package-button.active {
+            background-color: #0d9488;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+         .package-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .feature-check::before {
+            content: '✓';
+            color: #0d9488;
+            margin-right: 0.75rem;
+            font-weight: bold;
+        }
+        .feature-cross::before {
+            content: '✗';
+            color: #ef4444;
+            margin-right: 0.75rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+
+        <header class="text-center my-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-teal-800 tracking-tight">The ScaleUp Arc</h1>
+            <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Your Dedicated Digital Growth Partner. Our 2025 rate card is designed to provide exceptional value and deliver measurable growth for your business.</p>
+        </header>
+
+        <main>
+            <section id="packages" class="mb-16">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold tracking-tight">Digital Growth Packages</h2>
+                    <p class="mt-2 text-md text-gray-500 max-w-2xl mx-auto">We offer tailored packages to meet your business where it's at. Select a package below to explore the features and find the perfect fit for your goals.</p>
+                </div>
+
+                <div class="flex justify-center flex-wrap gap-2 md:gap-4 mb-8">
+                    <button id="btn-builder" class="package-button text-sm md:text-base font-semibold py-3 px-6 rounded-lg shadow-sm bg-white border border-gray-200 hover:bg-gray-100">Brand Builder</button>
+                    <button id="btn-generator" class="package-button text-sm md:text-base font-semibold py-3 px-6 rounded-lg shadow-sm bg-white border border-gray-200 hover:bg-gray-100">Lead Generator</button>
+                    <button id="btn-accelerator" class="package-button text-sm md:text-base font-semibold py-3 px-6 rounded-lg shadow-sm bg-white border border-gray-200 hover:bg-gray-100">ROI Accelerator</button>
+                </div>
+
+                <div id="package-details" class="bg-white p-6 md:p-10 rounded-2xl shadow-lg border border-gray-100 transition-all duration-300 ease-in-out">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="md:col-span-2">
+                            <h3 id="package-name" class="text-2xl font-bold text-teal-700"></h3>
+                            <p id="package-goal" class="mt-1 text-gray-600"></p>
+                            <p id="package-for" class="mt-4 bg-teal-50 text-teal-800 p-3 rounded-lg text-sm"></p>
+                            
+                            <div id="package-features" class="mt-6 space-y-3"></div>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center flex flex-col justify-center">
+                            <p class="text-gray-500 text-sm">Special Offer</p>
+                            <p class="text-4xl font-bold my-2" id="package-price"></p>
+                            <p class="text-gray-400 text-sm" id="package-regular-price"></p>
+                            <p class="mt-4 text-xs text-gray-500">Maximum Ad Spend Managed: <span id="package-ad-spend" class="font-semibold"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="comparison" class="mb-16">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold tracking-tight">Packages at a Glance</h2>
+                    <p class="mt-2 text-md text-gray-500 max-w-2xl mx-auto">Visually compare the key metrics across our packages to quickly understand the value and scale of each offering.</p>
+                </div>
+                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg border border-gray-100">
+                    <div class="chart-container">
+                        <canvas id="packageChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="add-ons" class="mb-16">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold tracking-tight">Optional Add-On Services</h2>
+                    <p class="mt-2 text-md text-gray-500">Enhance any package with these powerful add-ons.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                        <h3 class="font-bold text-lg text-teal-800">Website Maintenance & Security</h3>
+                        <p class="text-gray-600 mt-2 text-sm">Includes weekly plugin updates, daily backups, security monitoring, and performance checks.</p>
+                        <p class="text-2xl font-bold mt-4 text-gray-800">$150 <span class="text-sm font-normal text-gray-500">/month</span></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                        <h3 class="font-bold text-lg text-teal-800">SEO Booster Pack</h3>
+                        <p class="text-gray-600 mt-2 text-sm">Includes one SEO-optimized blog post (500-800 words) and basic link-building outreach.</p>
+                        <p class="text-2xl font-bold mt-4 text-gray-800">$500 <span class="text-sm font-normal text-gray-500">/month</span></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                        <h3 class="font-bold text-lg text-teal-800">Email Marketing Campaigns</h3>
+                        <p class="text-gray-600 mt-2 text-sm">Design and management of one promotional email campaign per month to your customer list.</p>
+                        <p class="text-2xl font-bold mt-4 text-gray-800">$400 <span class="text-sm font-normal text-gray-500">/month</span></p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="other-services" class="mb-16">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold tracking-tight">Additional Services</h2>
+                    <p class="mt-2 text-md text-gray-500">Beyond packages, we offer specialized creative and development services.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+                        <h3 class="text-2xl font-bold text-teal-800">Website Development</h3>
+                        <p class="mt-2 text-gray-600">We design and build professional, high-converting websites on <span class="font-semibold">Shopify & WordPress</span>. Our results-driven approach ensures your site is a powerful tool for measurable growth.</p>
+                        <p class="mt-4 font-semibold text-gray-700">All website projects are custom quoted. Please contact us for a detailed proposal.</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+                         <h3 class="text-2xl font-bold text-teal-800">Catalogue Design</h3>
+                         <p class="mt-2 text-gray-600">Professional print-ready and digital product catalogues to beautifully showcase your offerings. All packages include initial concept and two rounds of revisions.</p>
+                         <div class="mt-4 flow-root">
+                            <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                                    <table class="min-w-full divide-y divide-gray-300">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Pages (Both Sides)</th>
+                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Price (AUD)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200">
+                                            <tr><td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">Up to 10 Pages</td><td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">$250</td></tr>
+                                            <tr><td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">Up to 20 Pages</td><td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">$450</td></tr>
+                                            <tr><td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">Up to 30 Pages</td><td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">$650</td></tr>
+                                            <tr><td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">Up to 40 Pages</td><td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">$850</td></tr>
+                                            <tr><td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">Up to 50 Pages</td><td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">$1,050</td></tr>
+                                            <tr><td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">Additional Pages</td><td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">$25 per page</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="bg-gray-100 rounded-lg p-8 text-gray-600 text-sm">
+            <h3 class="font-bold text-lg text-gray-800 mb-4">Payment & Billing Terms</h3>
+            <ul class="space-y-2 list-disc list-inside">
+                <li><span class="font-semibold">Billing Cycle:</span> All monthly service charges are to be paid in advance.</li>
+                <li><span class="font-semibold">Ad Spend:</span> All advertising costs are paid directly by the client using their own card and ad account. The "Monthly Ad Spend Limit" is the maximum amount managed under the standard service fee.</li>
+                <li><span class="font-semibold">Ad Spend Overage:</span> If you request to spend above your package's ad limit, an additional service fee of 1% will be charged on the overage amount.</li>
+            </ul>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const packageData = {
+                builder: {
+                    name: 'Brand Builder',
+                    goal: 'Brand Awareness & Community Engagement',
+                    who: "Who It's For: Businesses wanting to build a strong brand identity.",
+                    price: '$600 AUD',
+                    regularPrice: 'Regularly $800',
+                    adSpend: '$1,000 AUD',
+                    features: [
+                        { text: '10+ Monthly Social Posts', included: true },
+                        { text: 'Basic Meta Engagement Ad', included: true },
+                        { text: 'SEO Foundation', included: true },
+                        { text: 'Social Media Performance Report', included: true },
+                        { text: 'Platforms: Facebook, Instagram', included: true },
+                        { text: 'Meta Business Verify', included: true },
+                        { text: 'Conversational Sales Agent', included: false },
+                        { text: 'Website Management', included: false },
+                    ]
+                },
+                generator: {
+                    name: 'Lead Generator',
+                    goal: 'Generate Website Traffic & Capture Leads',
+                    who: "Who It's For: Businesses wanting to grow and capture leads from search and social.",
+                    price: '$900 AUD',
+                    regularPrice: 'Regularly $1,200',
+                    adSpend: '$2,500 AUD',
+                    features: [
+                        { text: '15+ Monthly Social Posts', included: true },
+                        { text: 'Meta Lead Generation / Follower Ad', included: true },
+                        { text: 'Keyword Research & On-Page SEO', included: true },
+                        { text: 'Conversational Agent (Qualify Leads)', included: true },
+                        { text: 'Website & Lead Gen Report', included: true },
+                        { text: 'Platforms: Website, Google, Facebook, Instagram', included: true },
+                        { text: 'Website Management (Landing Pages)', included: true },
+                        { text: 'Meta Pixel & Conversion API Setup', included: true },
+                        { text: 'Google Analytics & GTM Setup', included: true },
+                    ]
+                },
+                accelerator: {
+                    name: 'ROI Accelerator',
+                    goal: 'Drive Direct Sales & Maximize ROI',
+                    who: "Who It's For: Businesses wanting to scale sales aggressively.",
+                    price: '$1,200 AUD',
+                    regularPrice: 'Regularly $1,600',
+                    adSpend: '$5,000 AUD',
+                    features: [
+                        { text: '20+ Monthly Social Posts', included: true },
+                        { text: 'Meta & Google Conversion Ads', included: true },
+                        { text: 'Advanced SEO & Google Business Profile', included: true },
+                        { text: 'Conversational Agent (Close Sales)', included: true },
+                        { text: 'Full Funnel Performance Report', included: true },
+                        { text: 'Platforms: Website, Google, Facebook, Instagram, Tik Tok', included: true },
+                        { text: 'Full Website Management & Optimization', included: true },
+                        { text: 'Essential Tracking Setup (Meta & Google)', included: true },
+                        { text: 'ROI Forecasting after strategy calls', included: true },
+                    ]
+                }
+            };
+
+            const buttons = {
+                builder: document.getElementById('btn-builder'),
+                generator: document.getElementById('btn-generator'),
+                accelerator: document.getElementById('btn-accelerator'),
+            };
+
+            const details = {
+                name: document.getElementById('package-name'),
+                goal: document.getElementById('package-goal'),
+                who: document.getElementById('package-for'),
+                price: document.getElementById('package-price'),
+                regularPrice: document.getElementById('package-regular-price'),
+                adSpend: document.getElementById('package-ad-spend'),
+                features: document.getElementById('package-features'),
+            };
+
+            function updatePackageDetails(packageName) {
+                const data = packageData[packageName];
+                if (!data) return;
+
+                details.name.textContent = data.name;
+                details.goal.textContent = data.goal;
+                details.who.textContent = data.who;
+                details.price.textContent = data.price;
+                details.regularPrice.textContent = data.regularPrice;
+                details.adSpend.textContent = data.adSpend;
+
+                details.features.innerHTML = '';
+                data.features.forEach(feature => {
+                    const p = document.createElement('p');
+                    p.textContent = feature.text;
+                    p.className = `text-gray-700 ${feature.included ? 'feature-check' : 'feature-cross'}`;
+                    details.features.appendChild(p);
+                });
+
+                Object.values(buttons).forEach(btn => btn.classList.remove('active'));
+                buttons[packageName].classList.add('active');
+            }
+            
+            Object.keys(buttons).forEach(key => {
+                buttons[key].addEventListener('click', () => updatePackageDetails(key));
+            });
+            
+            updatePackageDetails('generator');
+
+            const ctx = document.getElementById('packageChart').getContext('2d');
+            const packageChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Brand Builder', 'Lead Generator', 'ROI Accelerator'],
+                    datasets: [
+                        {
+                            label: 'Monthly Price (AUD)',
+                            data: [600, 900, 1200],
+                            backgroundColor: 'rgba(15, 118, 110, 0.6)',
+                            borderColor: 'rgba(15, 118, 110, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Monthly Posts',
+                            data: [10, 15, 20],
+                            backgroundColor: 'rgba(245, 158, 11, 0.6)',
+                            borderColor: 'rgba(245, 158, 11, 1)',
+                            borderWidth: 1,
+                             yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Ad Spend Limit (AUD)',
+                            data: [1000, 2500, 5000],
+                            backgroundColor: 'rgba(107, 114, 128, 0.6)',
+                            borderColor: 'rgba(107, 114, 128, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            type: 'linear',
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Price / Ad Spend (AUD)'
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                             type: 'linear',
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Monthly Posts'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
